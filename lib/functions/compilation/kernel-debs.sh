@@ -255,7 +255,10 @@ function kernel_package_callback_linux_image() {
 			if [[ "${script}" == "postinst" ]]; then
 				cat <<- HOOK_FOR_LINK_TO_LAST_INSTALLED_KERNEL
 					echo "Armbian: update last-installed kernel symlink to '$image_name'..."
-					ln -sfv $(basename "${installed_image_path}") /boot/$image_name || mv -v /${installed_image_path} /boot/${image_name}
+					ln -sfv $(basename "${installed_image_path}") /boot/$image_name || {
+						cp -vf "/${installed_image_path}" "/boot/${image_name}.new"
+						mv -vf "/boot/${image_name}.new" "/boot/${image_name}"
+					}
 					touch /boot/.next
 				HOOK_FOR_LINK_TO_LAST_INSTALLED_KERNEL
 			fi
@@ -294,7 +297,11 @@ function kernel_package_callback_linux_dtb() {
 	kernel_package_hook_helper "postinst" <(
 		cat <<- EOT
 			cd /boot
-			ln -sfT dtb-${kernel_version_family} dtb || mv dtb-${kernel_version_family} dtb
+			ln -sfT dtb-${kernel_version_family} dtb || {
+				rm -rf "dtb.new"
+				cp -r "dtb-${kernel_version_family}" "dtb.new"
+				mv "dtb.new" "dtb"
+			}
 		EOT
 	)
 
