@@ -220,6 +220,11 @@ function kernel_package_callback_linux_image() {
 		run_host_command_logged cp -rp "${tmp_kernel_install_dirs[INSTALL_DTBS_PATH]}" "${package_directory}/usr/lib/linux-image-${kernel_version_family}"
 	fi
 
+	declare -a package_depends=()
+	if [[ "${KERNEL_BUILD_DTBS:-yes}" == "yes" ]]; then
+		package_depends+=( "linux-dtb-${BRANCH}-${LINUXFAMILY} (=${artifact_version})" )
+	fi
+
 	# Generate a control file
 	cat <<- CONTROL_FILE > "${package_DEBIAN_dir}/control"
 		Package: ${package_name}
@@ -228,6 +233,7 @@ function kernel_package_callback_linux_image() {
 		Architecture: ${ARCH}
 		Maintainer: ${MAINTAINER} <${MAINTAINERMAIL}>
 		Section: kernel
+		Depends: $(IFS=','; echo "${package_depends[*]}")
 		Provides: linux-image, linux-image-armbian, armbian-$BRANCH
 		Description: Armbian Linux $BRANCH kernel image ${artifact_version_reason:-"${kernel_version_family}"}
 		 This package contains the Linux kernel, modules and corresponding other
